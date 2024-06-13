@@ -1,37 +1,44 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, FlatList, TextInput, StyleSheet } from 'react-native';
 
 const MyComponent = ({ data }) => {
   const [selectedItems, setSelectedItems] = useState([]);
-  const [dataSource, setDataSource] = useState([]);
+  const [dataSource, setDataSource] = useState(data);
   const [searchTerm, setSearchTerm] = useState('');
-  const inputRef = useRef(null);
 
+  // Update dataSource whenever data prop changes
   useEffect(() => {
     setDataSource(data);
   }, [data]);
 
-  useEffect(() => {
-    setTimeout(() => {
-      setDataSource(data.filter(item => item.name.includes(searchTerm)));
-    }, 1000);
-  }, [searchTerm]);
-
   const handleSelect = item => {
-    setSelectedItems((currentSelectedItems) => [...currentSelectedItems, item]);
+    if (selectedItems.includes(item)) {
+      setSelectedItems(selectedItems.filter(selectedItem => selectedItem !== item));
+    } else {
+      setSelectedItems([...selectedItems, item]);
+    }
   };
 
+  // TextInput Clear Functionality
   const handleClear = () => {
-    inputRef.current.clear();
-  }
+    setSearchTerm('');
+    setDataSource(data); // Reset dataSource to original data
+  };
+
+  const handleSearch = text => {
+    setSearchTerm(text);
+    const filteredData = data.filter(item =>
+      item.name.toLowerCase().includes(text.toLowerCase())
+    );
+    setDataSource(filteredData);
+  };
 
   return (
     <View style={styles.container}>
       <TextInput
         style={styles.input}
         placeholder="Search..."
-        ref={inputRef}
-        onChangeText={setSearchTerm}
+        onChangeText={handleSearch}
         value={searchTerm}
       />
       <TouchableOpacity style={styles.buttonView} onPress={handleClear}>
@@ -39,7 +46,7 @@ const MyComponent = ({ data }) => {
       </TouchableOpacity>
       <FlatList
         data={dataSource}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.id.toString()} // KeyExtractor Issue
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => handleSelect(item)}
